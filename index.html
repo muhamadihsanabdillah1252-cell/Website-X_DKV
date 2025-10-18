@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>X-DKV - Struktur Kelas & Jadwal</title>
+    <style>
+        /* Reset dan variabel */
+        :root {
+            --primary: #0a0e29;
+            --secondary: #1a1f4b;
+            --accent: #4d5bce;
+            --accent-light: #6c7ce0;
+            --text: #ffffff;
+            --text-secondary: #b8c1ec;
+            --star-color: #ffffff;
+            --planet-color: #ff6b6b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--primary);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Background bertema angkasa */
+        .space-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: var(--star-color);
+            border-radius: 50%;
+            animation: twinkle 5s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+        
+        .planet {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--planet-color), #c44569);
+            top: 10%;
+            right: 10%;
+            box-shadow: 0 0 40px rgba(255, 107, 107, 0.5);
+        }
+        
+        /* Header */
+        header {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: linear-gradient(to bottom, rgba(10, 14, 41, 0.9), transparent);
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #6c7ce0, #b8c1ec);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(108, 124, 224, 0.3);
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+        
+        /* Navigasi */
+        nav {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .nav-btn {
+            background-color: var(--secondary);
+            color: var(--text);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            margin: 0.5rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .nav-btn:hover {
+            background-color: var(--accent);
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn.active {
+            background-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-light);
+        }
+        
+        /* Konten utama */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+        
+        .content-section {
+            display: none;
+            background-color: rgba(26, 31, 75, 0.7);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(108, 124, 224, 0.2);
+        }
+        
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h2 {
+            color: var(--accent-light);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 0.5rem;
+        }
+        
+        /* Struktur Kelas */
+        .class-structure {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .class-card {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(108, 124, 224, 0.3);
+        }
+        
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(108, 124, 224, 0.3);
+        }
+        
+        .class-card h3 {
+            color: var(--accent-light);
+            margin-bottom: 1rem;
+        }
+        
+        .class-card p {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Jadwal Piket */
+        .duty-schedule {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(108, 124, 224, 0.2);
+        }
+        
+        th {
+            background-color: rgba(108, 124, 224, 0.2);
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: rgba(108, 124, 224, 0.1);
+        }
+        
+        /* Jadwal Pelajaran */
+        .timetable {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .day-card {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(108, 124, 224, 0.3);
+        }
+        
+        .day-card h3 {
+            color: var(--accent-light);
+            margin-bottom: 1rem;
+            text-align: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(108, 124, 224, 0.3);
+        }
+        
+        .subject {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(108, 124, 224, 0.1);
+        }
+        
+        .subject:last-child {
+            border-bottom: none;
+        }
+        
+        .subject-name {
+            color: var(--text);
+        }
+        
+        .subject-time {
+            color: var(--text-secondary);
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            margin-top: 2rem;
+            border-top: 1px solid rgba(108, 124, 224, 0.2);
+        }
+        
+        /* Responsif */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .class-structure, .timetable {
+                grid-template-columns: 1fr;
+            }
+            
+            .content-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background bertema angkasa -->
+    <div class="space-background">
+        <div class="stars" id="stars"></div>
+        <div class="planet"></div>
+    </div>
+    
+    <header>
+        <h1>X-DKV</h1>
+        <p class="subtitle">Struktur Kelas, Jadwal Piket & Jadwal Pelajaran</p>
+    </header>
+    
+    <nav>
+        <button class="nav-btn active" data-target="structure">Struktur Kelas</button>
+        <button class="nav-btn" data-target="duty">Jadwal Piket</button>
+        <button class="nav-btn" data-target="timetable">Jadwal Pelajaran</button>
+    </nav>
+    
+    <div class="container">
+        <!-- Struktur Kelas -->
+        <section id="structure" class="content-section active">
+            <h2>Struktur Kelas</h2>
+            <div class="class-structure">
+                <div class="class-card">
+                    <h3>Wali Kelas</h3>
+                    <p>M. Ramdhan Azis. S.Pd.</p>
+                </div>
+                <div class="class-card">
+                    <h3>Ketua Kelas</h3>
+                    <p>M Nizar Ali</p>
+                </div>
+                <div class="class-card">
+                    <h3>Wakil Ketua</h3>
+                    <p>Satrio Nugroho</p>
+                </div>
+                <div class="class-card">
+                    <h3>Sekretaris</h3>
+                    <p>Selvi Febrianti</p>
+                    <p>Keyla Alisa Rahman</p>
+                </div>
+                <div class="class-card">
+                    <h3>Bendahara</h3>
+                    <p>Davina Amelia</p>
+                    <p>Alya Maulida Hafiz</p>
+                </div>
+                <div class="class-card">
+                    <h3>Koordinator Piket</h3>
+                    <p>Rama Aughust Sanjaya</p>
+                    <p>M Ihsan Abdillah</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Jadwal Piket -->
+        <section id="duty" class="content-section">
+            <h2>Jadwal Piket Kelas</h2>
+            <div class="duty-schedule">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hari</th>
+                            <th>Nama Siswa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Senin</td>
+                            <td>Hakim, Rehan, Hana, Radhinka, Nizar, Revan, Ridho</td>
+                        </tr>
+                        <tr>
+                            <td>Selasa</td>
+                            <td>Alya, Farid, Fairuz, Rama, Kiya, Ludpi, Piana</td>
+                        </tr>
+                        <tr>
+                            <td>Rabu</td>
+                            <td>Airlangga, Davina, Mahesa, Mulyani, Rafael, Salsabila</td>
+                        </tr>
+                        <tr>
+                            <td>Kamis</td>
+                            <td>Bintang, Fahrudin, Ihsan, Nayla, Queen, Rezky</td>
+                        </tr>
+                        <tr>
+                            <td>Jumat</td>
+                            <td>Dafina, Denis, Baldi, Nafis, Raka, Rasya, Selvi</td>
+                        </tr>
+                        <tr>
+                            <td>Sabtu</td>
+                            <td>Cinta Cantika, Keyla, Fathur, Nelfanza, Nico, Revaldi, Satrio</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Jadwal Pelajaran -->
+        <section id="timetable" class="content-section">
+            <h2>Jadwal Pelajaran</h2>
+            <div class="timetable">
+                <div class="day-card">
+                    <h3>Senin</h3>
+                    <div class="subject">
+                        <span class="subject-name">PBAI</span>
+                        <span class="subject-time">12:45 - 14:30</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Sejarah</span>
+                        <span class="subject-time">14:30 - 15:40</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Istirahat</span>
+                        <span class="subject-time">15:40 - 16:00</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">KKA</span>
+                        <span class="subject-time">16:00 - 17:10</span>
+                    </div>
+                </div>
+                
+                <div class="day-card">
+                    <h3>Selasa</h3>
+                    <div class="subject">
+                        <span class="subject-name">Informatika</span>
+                        <span class="subject-time">07:30 - 09:45</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Istirahat Pagi </span>
+                        <span class="subject-time">09:45 - 10:05</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Bahasa Inggris</span>
+                        <span class="subject-time">10:05 - 12:20</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Istirahat Siang</span>
+                        <span class="subject-time">12:20 - 12:45</span>
+                    </div>                        
+                    <div class="subject">
+                        <span class="subject-name">Produktif DKV - Pa Sergio</span>
+                        <span class="subject-time">12:45 - 15:05</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Projek Ipas</span>
+                        <span class="subject-time">15:05 - 15:40</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Istirahat Sore</span>
+                        <span class="subject-time">15:40 - 16:00</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Projek Ipas</span>
+                        <span class="subject-time">16:00 - 16:35</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">BK</span>
+                        <span class="subject-time">16:35 - 17:10</span>
+                    </div>
+                </div>
+                
+                <div class="day-card">
+                    <h3>Rabu</h3>
+                    <div class="subject">
+                        <span class="subject-name">Matematika</span>
+                        <span class="subject-time">12:45 - 15:05</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Produktif DKV - Pa Supri</span>
+                        <span class="subject-time">15:05 - 15:40</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Istirahat</span>
+                        <span class="subject-time">15:40 - 16:00</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Produktif DKV - Pa Supri</span>
+                        <span class="subject-time">16:00 - 17:10</span>
+                    </div>
+                </div>
+                
+                <div class="day-card">
+                    <h3>Kamis</h3>
+                    <div class="subject">
+                        <span class="subject-name">Upacara</span>
+                        <span class="subject-time">06:30 - 07:40</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Produktif DKV-Gambar</span>
+                        <span class="subject-time">07:40 - 09:40</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Iatirahat</span>
+                        <span class="subject-time">09:40 - 10:00</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">PJOK</span>
+                        <span class="subject-time">10:00 - 12:00</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">BK</span>
+                        <span class="subject-time">12:00 - 12:40</span>
+                    </div>
+                </div>
+                
+                <div class="day-card">
+                    <h3>Jumat</h3>
+                    <div class="subject">
+                        <span class="subject-name">Pengajian</span>
+                        <span class="subject-time">06:30 - 07:40</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Seni Musik</span>
+                        <span class="subject-time">07:40 - 09:00</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">PKN</span>
+                        <span class="subject-time">09:00 - 09:40</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Istirahat</span>
+                        <span class="subject-time">09:40 - 10:00</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">PKN</span>
+                        <span class="subject-time">10:00 - 10:40</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Produktif DKV - Pa Sergio</span>
+                        <span class="subject-time">10:40 - 11:20</span>
+                    </div>
+                </div>
+
+                <div class="day-card">
+                    <h3>Sabtu</h3>
+                    <div class="subject">
+                        <span class="subject-name">Bahasa Indonesia</span>
+                        <span class="subject-time">07:00 - 09:40</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Istirahat</span>
+                        <span class="subject-time">09:40 - 10:00</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Bahasa Sunda</span>
+                        <span class="subject-time">10:00 - 11:20</span>
+                    </div>
+                    <div class="subject">
+                        <span class="subject-name">Projek Ipas</span>
+                        <span class="subject-time">11:20 - 12:40</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 X-DKV - Kelas Hutan</p>
+    </footer>
+    
+    <script>
+        // Membuat bintang-bintang di background
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 200;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // Ukuran acak untuk bintang
+                const size = Math.random() * 3;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                // Posisi acak
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                
+                // Animasi delay acak
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // Navigasi antar section
+        document.querySelectorAll('.nav-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Hapus kelas active dari semua tombol dan section
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Tambah kelas active ke tombol yang diklik
+                this.classList.add('active');
+                
+                // Tampilkan section yang sesuai
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+        
+        // Inisialisasi
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+        });
+    </script>
+</body>
+</html>
