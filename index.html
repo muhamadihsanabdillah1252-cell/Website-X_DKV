@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi Kelas</title>
+    <title>Sistem Absensi Kelas - Realtime</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         :root {
             --primary: #3498db;
@@ -42,6 +44,27 @@
             margin-bottom: 30px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
+            position: relative;
+        }
+        
+        .connection-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        
+        .connection-status.connected {
+            color: var(--success);
+        }
+        
+        .connection-status.disconnected {
+            color: var(--danger);
         }
         
         header h1 {
@@ -295,8 +318,11 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-clipboard-list"></i> Sistem Absensi Kelas</h1>
-            <p>Kelola kehadiran siswa dengan mudah</p>
+            <div id="connection-status" class="connection-status">
+                <i class="fas fa-circle"></i> <span>Menyambungkan...</span>
+            </div>
+            <h1><i class="fas fa-clipboard-list"></i> Sistem Absensi Kelas - Realtime</h1>
+            <p>Kelola kehadiran siswa dengan mudah - Data tersinkronisasi di semua perangkat</p>
         </header>
         
         <div class="card">
@@ -417,14 +443,40 @@
     </div>
 
     <script>
-        // Inisialisasi data absensi
-        let absensi = JSON.parse(localStorage.getItem('absensi')) || [];
-        let nextId = parseInt(localStorage.getItem('nextId')) || 1;
+        // Konfigurasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEXAMPLEEXAMPLEEXAMPLEEXAMPLE",
+            authDomain: "absensi-kelas-realtime.firebaseapp.com",
+            databaseURL: "https://absensi-kelas-realtime-default-rtdb.firebaseio.com",
+            projectId: "absensi-kelas-realtime",
+            storageBucket: "absensi-kelas-realtime.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+        };
 
-        // Fungsi untuk menyimpan data ke localStorage
-        function simpanData() {
-            localStorage.setItem('absensi', JSON.stringify(absensi));
-            localStorage.setItem('nextId', nextId.toString());
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Referensi database untuk absensi
+        const absensiRef = database.ref('absensi');
+        
+        // Array untuk menyimpan data absensi
+        let absensi = [];
+        let nextId = 1;
+
+        // Fungsi untuk mengupdate status koneksi
+        function updateConnectionStatus(status) {
+            const connectionStatus = document.getElementById('connection-status');
+            if (status) {
+                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> <span>Tersambung</span>';
+                connectionStatus.classList.remove('disconnected');
+                connectionStatus.classList.add('connected');
+            } else {
+                connectionStatus.innerHTML = '<i class="fas fa-circle"></i> <span>Terputus</span>';
+                connectionStatus.classList.remove('connected');
+                connectionStatus.classList.add('disconnected');
+            }
         }
 
         // Fungsi untuk menampilkan data absensi
@@ -467,19 +519,19 @@
                         <td>${formatTanggal(item.tanggal)}</td>
                         <td>
                             <div class="btn-group">
-                                <button class="action-btn btn-hadir" onclick="ubahStatus(${item.id}, 'hadir')">
+                                <button class="action-btn btn-hadir" onclick="ubahStatus('${item.id}', 'hadir')">
                                     <i class="fas fa-check-circle"></i> Hadir
                                 </button>
-                                <button class="action-btn btn-izin" onclick="ubahStatus(${item.id}, 'izin')">
+                                <button class="action-btn btn-izin" onclick="ubahStatus('${item.id}', 'izin')">
                                     <i class="fas fa-envelope"></i> Izin
                                 </button>
-                                <button class="action-btn btn-sakit" onclick="ubahStatus(${item.id}, 'sakit')">
+                                <button class="action-btn btn-sakit" onclick="ubahStatus('${item.id}', 'sakit')">
                                     <i class="fas fa-procedures"></i> Sakit
                                 </button>
-                                <button class="action-btn btn-alpha" onclick="ubahStatus(${item.id}, 'alpha')">
+                                <button class="action-btn btn-alpha" onclick="ubahStatus('${item.id}', 'alpha')">
                                     <i class="fas fa-times-circle"></i> Alpha
                                 </button>
-                                <button class="action-btn btn-danger" onclick="hapusAbsensi(${item.id})">
+                                <button class="action-btn btn-danger" onclick="hapusAbsensi('${item.id}')">
                                     <i class="fas fa-trash"></i> Hapus
                                 </button>
                             </div>
@@ -494,37 +546,50 @@
             updateStatistik();
         }
 
-        // Fungsi untuk menambah data absensi
+        // Fungsi untuk menambah data absensi ke Firebase
         function tambahAbsensi(nama, tanggal, status) {
+            const id = Date.now().toString(); // ID unik berdasarkan timestamp
             const dataBaru = {
-                id: nextId++,
+                id: id,
                 nama: nama,
                 tanggal: tanggal,
                 status: status
             };
             
-            absensi.push(dataBaru);
-            simpanData();
-            tampilkanAbsensi();
+            // Simpan ke Firebase
+            absensiRef.child(id).set(dataBaru)
+                .then(() => {
+                    console.log('Data berhasil disimpan ke Firebase');
+                })
+                .catch((error) => {
+                    console.error('Error menyimpan data:', error);
+                    alert('Terjadi kesalahan saat menyimpan data. Silakan coba lagi.');
+                });
         }
 
-        // Fungsi untuk mengubah status kehadiran
+        // Fungsi untuk mengubah status kehadiran di Firebase
         function ubahStatus(id, statusBaru) {
-            const index = absensi.findIndex(item => item.id === id);
-            
-            if (index !== -1) {
-                absensi[index].status = statusBaru;
-                simpanData();
-                tampilkanAbsensi();
-            }
+            absensiRef.child(id).update({ status: statusBaru })
+                .then(() => {
+                    console.log('Status berhasil diubah');
+                })
+                .catch((error) => {
+                    console.error('Error mengubah status:', error);
+                    alert('Terjadi kesalahan saat mengubah status. Silakan coba lagi.');
+                });
         }
 
-        // Fungsi untuk menghapus data absensi
+        // Fungsi untuk menghapus data absensi dari Firebase
         function hapusAbsensi(id) {
             if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-                absensi = absensi.filter(item => item.id !== id);
-                simpanData();
-                tampilkanAbsensi();
+                absensiRef.child(id).remove()
+                    .then(() => {
+                        console.log('Data berhasil dihapus');
+                    })
+                    .catch((error) => {
+                        console.error('Error menghapus data:', error);
+                        alert('Terjadi kesalahan saat menghapus data. Silakan coba lagi.');
+                    });
             }
         }
 
@@ -598,8 +663,29 @@
                 tampilkanAbsensi();
             });
             
-            // Tampilkan data absensi
-            tampilkanAbsensi();
+            // Mendengarkan perubahan data di Firebase
+            absensiRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                absensi = [];
+                
+                if (data) {
+                    // Konversi data dari Firebase ke array
+                    Object.keys(data).forEach(key => {
+                        absensi.push(data[key]);
+                    });
+                    
+                    // Urutkan berdasarkan ID (timestamp) terbaru
+                    absensi.sort((a, b) => b.id - a.id);
+                }
+                
+                // Tampilkan data
+                tampilkanAbsensi();
+            });
+            
+            // Monitor status koneksi Firebase
+            database.ref('.info/connected').on('value', (snapshot) => {
+                updateConnectionStatus(snapshot.val());
+            });
         });
     </script>
 </body>
