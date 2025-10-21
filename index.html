@@ -287,6 +287,41 @@
             color: #bdc3c7;
         }
         
+        .auth-section {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .auth-section h2 {
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .auth-form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 8px;
+        }
+        
+        .restricted {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
         @media (max-width: 768px) {
             .dashboard {
                 grid-template-columns: repeat(2, 1fr);
@@ -325,6 +360,27 @@
             <h1><i class="fas fa-clipboard-list"></i> Sistem Absensi Kelas - Realtime</h1>
             <p>Kelola kehadiran siswa dengan mudah - Data tersinkronisasi di semua perangkat</p>
         </header>
+        
+        <!-- Bagian Autentikasi -->
+        <div id="auth-section" class="auth-section">
+            <h2><i class="fas fa-user-shield"></i> Autentikasi Pengguna</h2>
+            <div id="auth-form" class="auth-form">
+                <div class="form-group">
+                    <label for="user-password"><i class="fas fa-lock"></i> Password Admin</label>
+                    <input type="password" id="user-password" class="form-control" placeholder="Masukkan password admin">
+                </div>
+                <button id="login-btn" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i> Login sebagai Admin
+                </button>
+            </div>
+            <div id="user-info" class="user-info" style="display: none;">
+                <i class="fas fa-user-circle"></i>
+                <span id="user-role">Anda login sebagai: <strong>Admin</strong></span>
+                <button id="logout-btn" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
         
         <div class="card">
             <h2 style="margin-bottom: 20px; color: var(--primary);"><i class="fas fa-plus-circle"></i> Tambah Data Absensi</h2>
@@ -461,8 +517,7 @@
             projectId: "absensi-kelas-realtime",
             storageBucket: "absensi-kelas-realtime.firebasestorage.app",
             messagingSenderId: "63865751971",
-  appId: "1:63865751971:web:06da2377742dc4cbc7b216",
-            appId: "G-3H8H76XHGF"
+            appId: "1:63865751971:web:06da2377742dc4cbc7b216"
         };
 
         // ==================================================
@@ -479,6 +534,10 @@
         // Array untuk menyimpan data absensi
         let absensi = [];
 
+        // Status otentikasi pengguna
+        let isAdmin = false;
+        const ADMIN_PASSWORD = "admin123"; // Ganti dengan password yang diinginkan
+
         // Fungsi untuk mengupdate status koneksi
         function updateConnectionStatus(status) {
             const connectionStatus = document.getElementById('connection-status');
@@ -490,6 +549,64 @@
                 connectionStatus.innerHTML = '<i class="fas fa-circle"></i> <span>Terputus</span>';
                 connectionStatus.classList.remove('connected');
                 connectionStatus.classList.add('disconnected');
+            }
+        }
+
+        // Fungsi untuk login admin
+        function loginAdmin(password) {
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.getElementById('auth-form').style.display = 'none';
+                document.getElementById('user-info').style.display = 'flex';
+                updateUIForAdmin();
+                alert('Login berhasil! Anda sekarang memiliki akses admin.');
+            } else {
+                alert('Password salah! Silakan coba lagi.');
+            }
+        }
+
+        // Fungsi untuk logout admin
+        function logoutAdmin() {
+            isAdmin = false;
+            document.getElementById('auth-form').style.display = 'block';
+            document.getElementById('user-info').style.display = 'none';
+            document.getElementById('user-password').value = '';
+            updateUIForAdmin();
+            alert('Anda telah logout dari akun admin.');
+        }
+
+        // Fungsi untuk mengupdate UI berdasarkan status admin
+        function updateUIForAdmin() {
+            const actionButtons = document.querySelectorAll('.action-btn');
+            const statusRadios = document.querySelectorAll('input[name="status"]');
+            
+            if (isAdmin) {
+                // Hapus kelas restricted dari semua tombol aksi
+                actionButtons.forEach(btn => {
+                    btn.classList.remove('restricted');
+                });
+                
+                // Aktifkan semua radio button status
+                statusRadios.forEach(radio => {
+                    radio.disabled = false;
+                });
+            } else {
+                // Tambahkan kelas restricted ke semua tombol aksi kecuali tombol hapus
+                actionButtons.forEach(btn => {
+                    if (!btn.classList.contains('btn-danger')) {
+                        btn.classList.add('restricted');
+                    }
+                });
+                
+                // Nonaktifkan semua radio button status kecuali "hadir"
+                statusRadios.forEach(radio => {
+                    if (radio.value !== 'hadir') {
+                        radio.disabled = true;
+                    }
+                });
+                
+                // Pastikan radio "hadir" terpilih
+                document.getElementById('status-hadir').checked = true;
             }
         }
 
@@ -526,12 +643,10 @@
                 dataTampil.forEach((item, index) => {
                     const row = document.createElement('tr');
                     
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${item.nama}</td>
-                        <td><span class="status-badge status-${item.status}">${item.status.toUpperCase()}</span></td>
-                        <td>${formatTanggal(item.tanggal)}</td>
-                        <td>
+                    // Buat tombol aksi berdasarkan status admin
+                    let actionButtons = '';
+                    if (isAdmin) {
+                        actionButtons = `
                             <div class="btn-group">
                                 <button class="action-btn btn-hadir" onclick="ubahStatus('${item.id}', 'hadir')">
                                     <i class="fas fa-check-circle"></i> Hadir
@@ -549,7 +664,35 @@
                                     <i class="fas fa-trash"></i> Hapus
                                 </button>
                             </div>
-                        </td>
+                        `;
+                    } else {
+                        actionButtons = `
+                            <div class="btn-group">
+                                <button class="action-btn btn-hadir restricted" onclick="alert('Hanya admin yang dapat mengubah status!')">
+                                    <i class="fas fa-check-circle"></i> Hadir
+                                </button>
+                                <button class="action-btn btn-izin restricted" onclick="alert('Hanya admin yang dapat mengubah status!')">
+                                    <i class="fas fa-envelope"></i> Izin
+                                </button>
+                                <button class="action-btn btn-sakit restricted" onclick="alert('Hanya admin yang dapat mengubah status!')">
+                                    <i class="fas fa-procedures"></i> Sakit
+                                </button>
+                                <button class="action-btn btn-alpha restricted" onclick="alert('Hanya admin yang dapat mengubah status!')">
+                                    <i class="fas fa-times-circle"></i> Alpha
+                                </button>
+                                <button class="action-btn btn-danger" onclick="hapusAbsensi('${item.id}')">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </div>
+                        `;
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.nama}</td>
+                        <td><span class="status-badge status-${item.status}">${item.status.toUpperCase()}</span></td>
+                        <td>${formatTanggal(item.tanggal)}</td>
+                        <td>${actionButtons}</td>
                     `;
                     
                     tabelBody.appendChild(row);
@@ -562,6 +705,12 @@
 
         // Fungsi untuk menambah data absensi ke Firebase
         function tambahAbsensi(nama, tanggal, status) {
+            // Jika bukan admin, hanya bisa menambahkan status "hadir"
+            if (!isAdmin && status !== 'hadir') {
+                alert('Hanya admin yang dapat menambahkan status selain "Hadir"!');
+                return;
+            }
+            
             const id = Date.now().toString(); // ID unik berdasarkan timestamp
             const dataBaru = {
                 id: id,
@@ -583,10 +732,23 @@
 
         // Fungsi untuk mengubah status kehadiran di Firebase
         function ubahStatus(id, statusBaru) {
+            if (!isAdmin) {
+                alert('Hanya admin yang dapat mengubah status!');
+                return;
+            }
+            
             absensiRef.child(id).update({ status: statusBaru })
                 .then(() => {
                     console.log('Status berhasil diubah');
-                })
+                alert('Status berhasil diubah!');
+                tampilkanAbsensi(); // Refresh tampilan
+                updateStatistik(); // Update statistik
+                updateUIForAdmin(); // Update UI
+                // Reset form
+                document.getElementById('form-absensi').reset();
+                document.getElementById('tanggal-absensi').value = new Date().toISOString().split('T')[0];
+                document.getElementById('status-hadir').checked = true;
+            })
                 .catch((error) => {
                     console.error('Error mengubah status:', error);
                     alert('Terjadi kesalahan saat mengubah status. Silakan coba lagi.');
@@ -646,6 +808,15 @@
             document.getElementById('tanggal-absensi').value = today;
             document.getElementById('tanggal-filter').value = today;
             
+            // Event listener untuk form login
+            document.getElementById('login-btn').addEventListener('click', function() {
+                const password = document.getElementById('user-password').value;
+                loginAdmin(password);
+            });
+            
+            // Event listener untuk logout
+            document.getElementById('logout-btn').addEventListener('click', logoutAdmin);
+            
             // Event listener untuk form tambah absensi
             document.getElementById('form-absensi').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -700,6 +871,9 @@
             database.ref('.info/connected').on('value', (snapshot) => {
                 updateConnectionStatus(snapshot.val());
             });
+            
+            // Inisialisasi UI untuk non-admin
+            updateUIForAdmin();
         });
     </script>
 </body>
