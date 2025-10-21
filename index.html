@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
+        /* CSS styles tetap sama seperti sebelumnya */
         :root {
             --primary: #3498db;
             --success: #2ecc71;
@@ -443,16 +444,30 @@
     </div>
 
     <script>
-        // Konfigurasi Firebase
+        // ==================================================
+        // 🔥 AREA KONFIGURASI FIREBASE - EDIT BAGIAN INI 🔥
+        // ==================================================
+        
+        // Langkah: 
+        // 1. Buka https://console.firebase.google.com
+        // 2. Buat project baru atau pilih existing
+        // 3. Klik "Add app" → Pilih ikon web </>
+        // 4. Salin konfigurasi dari Firebase dan tempel di bawah
+        
         const firebaseConfig = {
-            apiKey: "AIzaSyDEXAMPLEEXAMPLEEXAMPLEEXAMPLE",
+            apiKey: "AIzaSyDqMFyHRhsJdHjHdoBu463ar7k70fmwabY",
             authDomain: "absensi-kelas-realtime.firebaseapp.com",
-            databaseURL: "https://absensi-kelas-realtime-default-rtdb.firebaseio.com",
+            databaseURL: "https://absensi-kelas-realtime-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "absensi-kelas-realtime",
-            storageBucket: "absensi-kelas-realtime.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef123456"
+            storageBucket: "absensi-kelas-realtime.firebasestorage.app",
+            messagingSenderId: "63865751971",
+  appId: "1:63865751971:web:06da2377742dc4cbc7b216",
+            appId: "G-3H8H76XHGF"
         };
+
+        // ==================================================
+        // 🚀 AKHIR AREA KONFIGURASI - JANGAN EDIT DI BAWAH 🚀
+        // ==================================================
 
         // Inisialisasi Firebase
         firebase.initializeApp(firebaseConfig);
@@ -463,7 +478,6 @@
         
         // Array untuk menyimpan data absensi
         let absensi = [];
-        let nextId = 1;
 
         // Fungsi untuk mengupdate status koneksi
         function updateConnectionStatus(status) {
