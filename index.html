@@ -8,12 +8,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        /* CSS styles tetap sama seperti sebelumnya */
         :root {
             --primary: #3498db;
-            --success: #2ecc71;
             --warning: #f39c12;
-            --danger: #e74c3c;
             --light: #f8f9fa;
             --dark: #343a40;
         }
@@ -61,11 +58,11 @@
         }
         
         .connection-status.connected {
-            color: var(--success);
+            color: #2ecc71;
         }
         
         .connection-status.disconnected {
-            color: var(--danger);
+            color: #e74c3c;
         }
         
         .admin-badge {
@@ -156,13 +153,13 @@
             transform: translateY(-2px);
         }
         
-        .btn-success {
-            background-color: var(--success);
+        .btn-warning {
+            background-color: var(--warning);
             color: white;
         }
         
         .btn-danger {
-            background-color: var(--danger);
+            background-color: #e74c3c;
             color: white;
         }
         
@@ -328,6 +325,37 @@
             pointer-events: none;
         }
         
+        .admin-only {
+            position: relative;
+        }
+        
+        .admin-only::after {
+            content: "Hanya Admin";
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--warning);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .login-required {
+            text-align: center;
+            padding: 30px;
+            background-color: #fff8e1;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .login-required i {
+            font-size: 2.5rem;
+            color: var(--warning);
+            margin-bottom: 15px;
+        }
+        
         @media (max-width: 768px) {
             .dashboard {
                 grid-template-columns: repeat(2, 1fr);
@@ -393,7 +421,17 @@
         
         <div class="card">
             <h2 style="margin-bottom: 20px; color: var(--primary);"><i class="fas fa-plus-circle"></i> Tambah Data Absensi</h2>
-            <form id="form-absensi">
+            
+            <div id="login-required" class="login-required" style="display: none;">
+                <i class="fas fa-lock"></i>
+                <h3>Login Diperlukan</h3>
+                <p>Anda harus login sebagai admin untuk menambahkan data absensi.</p>
+                <button id="goto-login" class="btn btn-warning" style="margin-top: 15px;">
+                    <i class="fas fa-sign-in-alt"></i> Login Sekarang
+                </button>
+            </div>
+            
+            <form id="form-absensi" style="display: none;">
                 <div class="form-group">
                     <label for="nama-siswa"><i class="fas fa-user"></i> Nama Siswa</label>
                     <input type="text" id="nama-siswa" class="form-control" placeholder="Masukkan nama siswa" required>
@@ -407,19 +445,22 @@
                 <div class="form-group">
                     <label><i class="fas fa-clipboard-check"></i> Status Kehadiran</label>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 120px;">
+                        <div style="flex: 1; min-width: 120px;" id="izin-container" class="admin-only">
                             <input type="radio" id="status-izin" name="status" value="izin" checked>
                             <label for="status-izin" class="status-badge status-izin" style="cursor: pointer; display: block; text-align: center;">
                                 <i class="fas fa-envelope"></i> Izin
                             </label>
                         </div>
-                        <div style="flex: 1; min-width: 120px;">
+                        <div style="flex: 1; min-width: 120px;" id="sakit-container" class="admin-only">
                             <input type="radio" id="status-sakit" name="status" value="sakit">
                             <label for="status-sakit" class="status-badge status-sakit" style="cursor: pointer; display: block; text-align: center;">
                                 <i class="fas fa-procedures"></i> Sakit
                             </label>
                         </div>
                     </div>
+                    <p style="margin-top: 10px; font-size: 0.9rem; color: var(--warning);">
+                        <i class="fas fa-info-circle"></i> Hanya admin yang dapat menambahkan data absensi
+                    </p>
                 </div>
                 
                 <button type="submit" class="btn btn-primary" style="width: 100%;">
@@ -481,7 +522,7 @@
             <div id="empty-state" class="empty-state" style="display: none;">
                 <i class="fas fa-clipboard"></i>
                 <h3>Belum ada data absensi</h3>
-                <p>Silakan tambah data absensi menggunakan form di atas</p>
+                <p>Silakan login sebagai admin untuk menambahkan data absensi</p>
             </div>
         </div>
     </div>
@@ -579,41 +620,32 @@
             const authForm = document.getElementById('auth-form');
             const userInfo = document.getElementById('user-info');
             const adminBadge = document.getElementById('admin-badge');
+            const formAbsensi = document.getElementById('form-absensi');
+            const loginRequired = document.getElementById('login-required');
             
             if (isAdmin) {
                 authForm.style.display = 'none';
                 userInfo.style.display = 'flex';
                 adminBadge.style.display = 'flex';
+                formAbsensi.style.display = 'block';
+                loginRequired.style.display = 'none';
                 
                 // Hapus kelas restricted dari semua tombol aksi
                 document.querySelectorAll('.action-btn').forEach(btn => {
                     btn.classList.remove('restricted');
                 });
-                
-                // Aktifkan semua radio button status
-                document.querySelectorAll('input[name="status"]').forEach(radio => {
-                    radio.disabled = false;
-                });
             } else {
                 authForm.style.display = 'block';
                 userInfo.style.display = 'none';
                 adminBadge.style.display = 'none';
+                formAbsensi.style.display = 'none';
+                loginRequired.style.display = 'block';
                 document.getElementById('user-password').value = '';
                 
                 // Tambahkan kelas restricted ke semua tombol aksi
                 document.querySelectorAll('.action-btn').forEach(btn => {
                     btn.classList.add('restricted');
                 });
-                
-                // Nonaktifkan semua radio button status kecuali "izin"
-                document.querySelectorAll('input[name="status"]').forEach(radio => {
-                    if (radio.value !== 'izin') {
-                        radio.disabled = true;
-                    }
-                });
-                
-                // Pastikan radio "izin" terpilih
-                document.getElementById('status-izin').checked = true;
             }
             
             // Refresh tampilan data
@@ -703,9 +735,9 @@
 
         // Fungsi untuk menambah data absensi ke Firebase
         function tambahAbsensi(nama, tanggal, status) {
-            // Jika bukan admin, hanya bisa menambahkan status "izin"
-            if (!isAdmin && status !== 'izin') {
-                alert('Hanya admin yang dapat menambahkan status selain "Izin"!');
+            // Hanya admin yang dapat menambahkan data
+            if (!isAdmin) {
+                alert('Hanya admin yang dapat menambahkan data absensi!');
                 return;
             }
             
@@ -738,7 +770,15 @@
             absensiRef.child(id).update({ status: statusBaru })
                 .then(() => {
                     console.log('Status berhasil diubah');
-                })
+                alert('Status berhasil diubah!');
+                tampilkanAbsensi(); // Refresh tampilan
+                updateStatistik(); // Update statistik
+                updateUIForAdmin(); // Update UI
+                // Reset form
+                document.getElementById('form-absensi').reset();
+                document.getElementById('tanggal-absensi').value = new Date().toISOString().split('T')[0];
+                document.getElementById('status-izin').checked = true;
+            })
                 .catch((error) => {
                     console.error('Error mengubah status:', error);
                     alert('Terjadi kesalahan saat mengubah status. Silakan coba lagi.');
@@ -806,6 +846,11 @@
             document.getElementById('login-btn').addEventListener('click', function() {
                 const password = document.getElementById('user-password').value;
                 loginAdmin(password);
+            });
+            
+            // Event listener untuk tombol login di form absensi
+            document.getElementById('goto-login').addEventListener('click', function() {
+                document.getElementById('auth-section').scrollIntoView({ behavior: 'smooth' });
             });
             
             // Event listener untuk logout
